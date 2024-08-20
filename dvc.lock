@@ -1,0 +1,27 @@
+schema: '2.0'
+stages:
+  buid-features:
+    cmd: python3 src/features/build_features.py
+    deps:
+    - path: data/raw/test-00000-of-00001.parquet
+      hash: md5
+      md5: 9656664d11e0f88c046f78ddaf1f76ce
+      size: 55816
+    - path: data/raw/train-00000-of-00001.parquet
+      hash: md5
+      md5: 5c5983d245a26bf24361a0f2d4b620f7
+      size: 529641
+    - path: data/raw/validation-00000-of-00001.parquet
+      hash: md5
+      md5: ef0858f9a334467c97503f034968d5fa
+      size: 102335
+    - path: src/features/build_features.py
+      hash: md5
+      md5: 96d0f540c72c42094611298c86d532b2
+      size: 1944
+    outs:
+    - path: data/processed/
+      hash: md5
+      md5: 95d3084b6c1c2f387ef3b39ba648738f.dir
+      size: 849743
+      nfiles: 3

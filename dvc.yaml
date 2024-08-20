@@ -1,0 +1,10 @@
+stages:
+  buid-features:
+    cmd: python3 src/features/build_features.py
+    deps:
+    - data/raw/test-00000-of-00001.parquet
+    - data/raw/train-00000-of-00001.parquet
+    - data/raw/validation-00000-of-00001.parquet
+    - src/features/build_features.py
+    outs:
+    - data/processed/
