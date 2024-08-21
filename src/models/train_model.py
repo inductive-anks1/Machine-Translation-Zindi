@@ -14,6 +14,11 @@ from transformers import FlaubertTokenizer, TFFlaubertModel
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import EarlyStopping, Callback
 import pathlib
+import dagshub
+
+dagshub.init(repo_owner='inductive-anks1', repo_name='Machine-Translation-Zindi', mlflow=True)
+
+mlflow.set_tracking_uri("https://dagshub.com/inductive-anks1/Machine-Translation-Zindi.mlflow")
 
 # Data loading functions
 def load_data(data_path):
