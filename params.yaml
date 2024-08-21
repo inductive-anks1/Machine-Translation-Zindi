@@ -1,0 +1,11 @@
+train_model:
+  head_size : 1024
+  num_heads : 16
+  ff_dim : 4096
+  dropout : 0.1
+  num_layers : 5
+  initial_learning_rate : 0.0001
+  decay_steps : 10000
+  decay_rate : 0.9
+  batch_size : 30
+  epochs : 20

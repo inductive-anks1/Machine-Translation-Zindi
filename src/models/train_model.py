@@ -1,4 +1,5 @@
 import numpy as np
+import yaml
 import pandas as pd
 import tensorflow as tf
 from tqdm import tqdm
@@ -116,14 +117,16 @@ class PositionalEncoding(tf.keras.layers.Layer):
         return cls(config['max_seq_len'], config['dm'])
 
 
-def build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer):
+def build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer, head_size = 1024,
+                num_heads = 16, ff_dim = 4096, dropout = 0.1, num_layers = 5):
+    
     flaubert_embedding_layer = FlauBERTEmbeddingLayer(flaubert_model)
 
-    head_size = 1024
-    num_heads = 16
-    ff_dim = 4096
-    dropout = 0.1
-    num_layers = 5
+    # head_size = 1024
+    # num_heads = 16
+    # ff_dim = 4096
+    # dropout = 0.1
+    # num_layers = 5
 
     encoder_inputs = Input(shape=(max_dyu_len,), name='encoder_inputs', dtype=tf.int32)
     encoder_embeddings = flaubert_embedding_layer(encoder_inputs)
@@ -221,6 +224,10 @@ def save_model(model, output_path):
 
 
 def main():
+
+    params_file = 'params.yaml'
+    params = yaml.safe_load(open(params_file))["train_model"]
+
     curr_dir = pathlib.Path(__file__)
     home_dir = curr_dir.parent.parent.parent
 
@@ -250,7 +257,8 @@ def main():
     train_encodings_fr = encode_sentences(train['fr'].tolist(), flaubert_tokenizer, max_fr_len)
 
     # Build and compile the model
-    model = build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer)
+    model = build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer, head_size=params['head_size'], num_heads=params['num_heads'], 
+                        ff_dim=params['ff_dim'], dropout=params['dropout'], num_layers=params['num_layers'])
     compile_model(model)
 
     # Prepare training data
@@ -267,7 +275,7 @@ def main():
     # Train model
     history = train_model(
         model, encoder_input_train, decoder_input_train, decoder_target_train,
-        encoder_input_val, decoder_input_val, decoder_target_val
+        encoder_input_val, decoder_input_val, decoder_target_val, batch_size=params['batch_size'], epochs=params['epochs']
     )
 
     # Save model
