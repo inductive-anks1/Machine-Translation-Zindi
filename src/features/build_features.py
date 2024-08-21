@@ -34,6 +34,12 @@ def preprocessing(train, validate, test):
 
     return train, validate, test
 
+def sentence_length(df):
+    df['dyu_length'] = df['dyu'].apply(lambda x: len(x.split()))
+    df['fr_length'] = df['fr'].apply(lambda x: len(x.split()))
+    return df
+
+
 
 if __name__ == "__main__":
     curr_dir = pathlib.Path(__file__)
@@ -48,5 +54,9 @@ if __name__ == "__main__":
     test = load_data(test_path)
 
     train, validate, test = preprocessing(train=train, validate=validate, test=test)
+
+    train = sentence_length(train)
+    validate = sentence_length(validate)
+    test = sentence_length(test)
 
     save_data(train, validate, test, home_dir.as_posix() + '/data/processed')

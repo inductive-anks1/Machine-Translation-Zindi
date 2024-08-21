@@ -8,3 +8,10 @@ stages:
     - src/features/build_features.py
     outs:
     - data/processed/
+  train-model:
+    cmd: python3 src/models/train_model.py
+    deps:
+    - data/processed/
+    - src/models/train_model.py
+    outs:
+    - models/
