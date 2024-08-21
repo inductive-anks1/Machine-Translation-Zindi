@@ -25,3 +25,32 @@ stages:
       md5: 81153b52037e6d13762999cc901e6e87.dir
       size: 895848
       nfiles: 3
+  train-model:
+    cmd: python3 src/models/train_model.py
+    deps:
+    - path: data/processed/
+      hash: md5
+      md5: 81153b52037e6d13762999cc901e6e87.dir
+      size: 895848
+      nfiles: 3
+    - path: src/models/train_model.py
+      hash: md5
+      md5: 2c7be8238151b46808a7b4fcacf5d909
+      size: 11415
+    params:
+      params.yaml:
+        train_model.batch_size: 30
+        train_model.decay_rate: 0.9
+        train_model.decay_steps: 10000
+        train_model.epochs: 19
+        train_model.ff_dim: 4096
+        train_model.head_size: 1024
+        train_model.initial_learning_rate: 0.0001
+        train_model.num_heads: 16
+        train_model.num_layers: 5
+    outs:
+    - path: models/
+      hash: md5
+      md5: 9e93bd29ff62936512d44a4e5bbfa482.dir
+      size: 4035375396
+      nfiles: 1
