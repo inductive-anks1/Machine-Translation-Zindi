@@ -3,6 +3,8 @@ import yaml
 import pandas as pd
 import tensorflow as tf
 from tqdm import tqdm
+import mlflow
+import mlflow.tensorflow
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Model
@@ -224,7 +226,6 @@ def save_model(model, output_path):
 
 
 def main():
-
     params_file = 'params.yaml'
     params = yaml.safe_load(open(params_file))["train_model"]
 
@@ -256,33 +257,51 @@ def main():
     train_encodings_dyu = encode_sentences(train['dyu'].tolist(), flaubert_tokenizer, max_dyu_len)
     train_encodings_fr = encode_sentences(train['fr'].tolist(), flaubert_tokenizer, max_fr_len)
 
-    # Build and compile the model
-    model = build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer, head_size=params['head_size'], num_heads=params['num_heads'], 
-                        ff_dim=params['ff_dim'], dropout=params['dropout'], num_layers=params['num_layers'])
-    compile_model(model)
+    # Start an MLflow experiment
+    mlflow.set_experiment("translation_experiment")
+    with mlflow.start_run():
+        # Log the parameters
+        mlflow.log_params(params)
 
-    # Prepare training data
-    encoder_input_data, decoder_input_data, decoder_target_data = prepare_data(
-        train_encodings_dyu, train_encodings_fr, max_fr_len
-    )
+        # Build and compile the model
+        model = build_model(max_dyu_len, max_fr_len, flaubert_model, flaubert_tokenizer, 
+                            head_size=params['head_size'], num_heads=params['num_heads'], 
+                            ff_dim=params['ff_dim'], dropout=params['dropout'], num_layers=params['num_layers'])
+        compile_model(model)
 
-    # Split data
-    encoder_input_train, encoder_input_val, decoder_input_train, decoder_input_val, \
-    decoder_target_train, decoder_target_val = split_data(
-        encoder_input_data, decoder_input_data, decoder_target_data
-    )
+        # Prepare training data
+        encoder_input_data, decoder_input_data, decoder_target_data = prepare_data(
+            train_encodings_dyu, train_encodings_fr, max_fr_len
+        )
 
-    # Train model
-    history = train_model(
-        model, encoder_input_train, decoder_input_train, decoder_target_train,
-        encoder_input_val, decoder_input_val, decoder_target_val, batch_size=params['batch_size'], epochs=params['epochs']
-    )
+        # Split data
+        encoder_input_train, encoder_input_val, decoder_input_train, decoder_input_val, \
+        decoder_target_train, decoder_target_val = split_data(
+            encoder_input_data, decoder_input_data, decoder_target_data
+        )
 
-    # Save model
-    # After training the model
-    save_model(model, output_path + "/transformer_translation_model.keras")
+        # Train model
+        history = train_model(
+            model, encoder_input_train, decoder_input_train, decoder_target_train,
+            encoder_input_val, decoder_input_val, decoder_target_val, 
+            batch_size=params['batch_size'], epochs=params['epochs']
+        )
 
+        # Log metrics
+        for epoch, acc in enumerate(history.history['accuracy']):
+            mlflow.log_metric("train_accuracy", acc, step=epoch)
+        for epoch, val_acc in enumerate(history.history['val_accuracy']):
+            mlflow.log_metric("val_accuracy", val_acc, step=epoch)
+        for epoch, loss in enumerate(history.history['loss']):
+            mlflow.log_metric("train_loss", loss, step=epoch)
+        for epoch, val_loss in enumerate(history.history['val_loss']):
+            mlflow.log_metric("val_loss", val_loss, step=epoch)
 
+        # Save model
+        save_model(model, output_path + "/transformer_translation_model.keras")
+        
+        # Log the model
+        mlflow.tensorflow.log_model(model, "model")
 
 if __name__ == "__main__":
     main()
